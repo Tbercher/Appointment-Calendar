@@ -17,6 +17,6 @@ public class Appointment {
     private LocalTime endTime; // the two times represent the range in which a user can post their "availability" range
     private Boolean taken; // indicates if appointment is taken
 
-
-
 }
+
+
