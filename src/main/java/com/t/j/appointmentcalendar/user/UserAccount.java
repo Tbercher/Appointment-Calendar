@@ -14,22 +14,21 @@ public class UserAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; //unique id
     @NotBlank
-    private String username;
-    @NotBlank//username / identifier. Should also be unique
+    private String username; //username / identifier. Should also be unique
+    @NotBlank
     private String password; // used later for logging in
     @NotBlank
     private int pin; // unique pin for adding to appointments
     @Email
     private String email; // user's email
 
-
+// constructor
     public UserAccount(String username, String password, int pin, String email) {
         this.username = username;
         this.password = password;
         this.pin = pin;
         this.email = email;
-    }
-
+    }// no args constructor
     public UserAccount() {
 
     }
