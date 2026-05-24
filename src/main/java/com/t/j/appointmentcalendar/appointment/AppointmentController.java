@@ -12,5 +12,5 @@ import java.time.LocalDateTime;
 @RequestMapping("/vi/api/appointment")
 public class AppointmentController {
 
-    
+
 }

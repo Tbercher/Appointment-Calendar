@@ -24,6 +24,10 @@ public class Appointment {
     @NotBlank
     private String appointmentDescription; // description
 
+    private boolean reservationStatus;
+
+    private String reservee; // this would be the username or id of the individual that wants to reserve the time slot.
+
     // Constructor
     public Appointment(UserAccount user, LocalDateTime startTime, LocalDateTime endTime, String appointmentTitle, String appointmentDescription){
         username = user.getUsername();
@@ -68,6 +72,22 @@ public class Appointment {
 
     public void setAppointmentDescription(String appointmentDescription){
         this.appointmentDescription = appointmentDescription;
+    }
+
+    public String getReservee() {
+        return reservee;
+    }
+
+    public void setReservee(String reservee) {
+        this.reservee = reservee;
+    }
+
+    public boolean getReservationStatus() {
+        return reservationStatus;
+    }
+
+    public void setReservationStatus(boolean reservationStatus) {
+        this.reservationStatus = reservationStatus;
     }
 }
 
