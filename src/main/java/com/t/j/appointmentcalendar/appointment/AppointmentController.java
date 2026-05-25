@@ -25,6 +25,10 @@ public class AppointmentController {
         return appointmentServices.getAllAppointments();
     }
 
-    // Get to a specific appointment
+    @PostMapping("/addAppointment"){
+        public
+    }
+
+    // Get reservee appointment
     @GetMapping("/")
 }
