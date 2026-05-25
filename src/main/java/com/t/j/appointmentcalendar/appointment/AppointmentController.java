@@ -19,12 +19,10 @@ public class AppointmentController {
         this.appointmentServices = appointmentServices;
     }
 
-    // Gets all appointments
-    @GetMapping("/allAppointments")
-    public List<Appointment> getAppointments(){
-        return appointmentServices.getAllAppointments();
-    }
+//    // Gets all appointments
+//    @GetMapping("/allAppointments")
+//    public List<Appointment> getAppointments(){
+//        return appointmentServices.getAllAppointments();
+//    }
 
-    // Get to a specific appointment
-    @GetMapping("/")
 }
