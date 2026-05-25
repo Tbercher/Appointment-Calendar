@@ -29,10 +29,13 @@ public class Appointment {
     private String appointmentTitle; // title of appointment
     @NotBlank
     private String appointmentDescription; // description
+    @NotBlank
+    private int numOfSlots; // Records number of slots used for an appointment
 
     private boolean reservationStatus;
 
     private String reservee; // this would be the username or id of the individual that wants to reserve the time slot.
+
 
     // Constructor
     public Appointment(UserAccount user, LocalDateTime startTime, LocalDateTime endTime, String appointmentTitle, String appointmentDescription){
