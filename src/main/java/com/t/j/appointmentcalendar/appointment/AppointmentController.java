@@ -19,10 +19,16 @@ public class AppointmentController {
         this.appointmentServices = appointmentServices;
     }
 
-//    // Gets all appointments
-//    @GetMapping("/allAppointments")
-//    public List<Appointment> getAppointments(){
-//        return appointmentServices.getAllAppointments();
-//    }
+    // Gets all appointments
+    @GetMapping("/allAppointments")
+    public List<Appointment> getAppointments(){
+        return appointmentServices.getAllAppointments();
+    }
 
+    @PostMapping("/addAppointment"){
+        public
+    }
+
+    // Get reservee appointment
+    @GetMapping("/")
 }
