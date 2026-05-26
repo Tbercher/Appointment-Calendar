@@ -1,43 +1,72 @@
 package com.t.j.appointmentcalendar.appointment;
 
+
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/vi/api/appointment")
+@RequestMapping("/v1/api/appointment")
 public class AppointmentController {
 
     private final AppointmentServices appointmentServices;
 
+    // Injecting service layer
     public AppointmentController(AppointmentServices appointmentServices) {
         this.appointmentServices = appointmentServices;
     }
 
+
+    // All @GetMapping
+
     // Gets all appointments
-    @GetMapping("/allAppointments")
-    public List<Appointment> getAppointments() {
-        return appointmentServices.getAllAppointments();
+    @GetMapping
+    public ResponseEntity<List<Appointment>> getAllAppointments() {
+        return new ResponseEntity<>(appointmentServices.getAllAppointments(), HttpStatus.OK);
     }
 
     // gets specific appointment whether that be reservee or the creators
-    @PostMapping("/{id}")
-    public Appointment getAppointment(@PathVariable int id) {
-        return appointmentServices.getSpecificAppointment(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<Appointment> getAppointmentById(@PathVariable Long id) {
+        Optional<Appointment> appointment = appointmentServices.getAppointmentById(id);
+        return appointment.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Post Mapping
 
-    // to update an appointment and what it entails
-    @PutMapping("/update/{id}/option={o}")
-    public String updateAppointment(@PathVariable int id, @PathVariable int o) {
-        return appointmentServices.updateAppointment(id, o);
+    @PostMapping
+    public ResponseEntity<Appointment> createAppointment(@Valid @RequestBody Appointment appointment) {
+        Appointment savedAppointment = appointmentServices.createAppointment(appointment);
+        return new ResponseEntity<>(savedAppointment, HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public String deleteAppointment(@PathVariable int id){
-        return appointmentServices.deleteAppointment();
+    // Put MAPPING
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Appointment> updateAppointment(@PathVariable Long id, @Valid @RequestBody Appointment appointmentDetails) {
+        Optional<Appointment> updatedAppointment = appointmentServices.updateAppointment(id, appointmentDetails);
+        return updatedAppointment.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id) {
+        boolean isDeleted = appointmentServices.deleteAppointment(id);
+
+        if (isDeleted) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 }
 
