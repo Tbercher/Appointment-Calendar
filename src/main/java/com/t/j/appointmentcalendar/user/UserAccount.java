@@ -6,7 +6,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.ArrayList;
 
 @Entity
 public class UserAccount {
@@ -18,16 +21,16 @@ public class UserAccount {
     private String username; //username / identifier. Should also be unique
     @NotBlank
     private String password; // used later for logging in
-    @NotNull(message = "pin cannot be null")
-    private int pin; // unique pin for adding to appointments
+    @JdbcTypeCode(SqlTypes.JSON)
+    private UserDetails userDetails;
     @Email
     private String email; // user's email
 
 // constructor
-    public UserAccount(String username, String password, int pin, String email) {
+    public UserAccount(String username, String password, UserDetails userDetails, String email) {
         this.username = username;
         this.password = password;
-        this.pin = pin;
+        this.userDetails = userDetails;
         this.email = email;
     }// no args constructor
     public UserAccount() {
@@ -42,8 +45,8 @@ public class UserAccount {
         return password;
     }
 
-    public int getPin() {
-        return pin;
+    public UserDetails getUserDetails() {
+        return userDetails;
     }
 
     public String getEmail() {
@@ -58,8 +61,8 @@ public class UserAccount {
         this.password = password;
     }
 
-    public void setPin(int pin) {
-        this.pin = pin;
+    public void setUserDetails(UserDetails userDetails) {
+        this.userDetails = userDetails;
     }
 
     public void setEmail(String email) {
@@ -68,6 +71,6 @@ public class UserAccount {
 
     @Override
     public String toString() {
-        return "User: " + username + " \nPin: " + pin;
+        return "User: " + username;
     }
 }
