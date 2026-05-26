@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class UserAccount {
@@ -17,7 +18,7 @@ public class UserAccount {
     private String username; //username / identifier. Should also be unique
     @NotBlank
     private String password; // used later for logging in
-    @NotBlank
+    @NotNull(message = "pin cannot be null")
     private int pin; // unique pin for adding to appointments
     @Email
     private String email; // user's email

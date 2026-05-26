@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 
 import java.time.LocalDateTime;
@@ -19,22 +20,28 @@ public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NotBlank
     private String username;
-    @NotBlank
+
+    @NotNull(message = "Time and date must not be null")
     private LocalDateTime startTime; // beginning time for appointment time slot
-    @NotBlank
+
+    @NotNull(message = "Time and date must not be null")
     private LocalDateTime endTime; // end time for appointment time slot
+
     @NotBlank
     private String appointmentTitle; // title of appointment
+
     @NotBlank
     private String appointmentDescription; // description
-    @NotBlank
+
+    @NotNull
     private int numOfSlots; // Records number of slots used for an appointment
 
     private boolean reservationStatus;
 
-    private String reservee; // this would be the username or id of the individual that wants to reserve the time slot.
+    private String[] reservees; // this would be the username or id of the individual that wants to reserve the time slot.
 
 
     // Constructor
