@@ -33,15 +33,49 @@ public class UserServices {
         }
     }
 
-    public String addUserAccount() {
-        return "";
+    public String addUserAccount(UserAccount userAccount) {
+        Optional<UserAccount> takenUsersAndEmails = userAccountRepository.findUserAccountByUsernameOrEmail(userAccount.getUsername(), userAccount.getEmail());
+        if(takenUsersAndEmails.isPresent()) {
+            return "Username and or password is already taken";
+        } else {
+            userAccountRepository.save(userAccount);
+            return "User " + userAccount.getUsername() + " successfully created";
+        }
     }
 
-    public String updateUserAccount(int id, int o) {
+    public String updateUserAccount(String username, int o, String input) {
+        switch(o) {
+            case 1: // Change the username
+                Optional<UserAccount> takenUsernames = userAccountRepository.findUserAccountByUsername(input);
+                if(takenUsernames.isPresent()) {
+                    return "Cannot update username, " + input + " is already taken";
+                } else {
+                    Optional<UserAccount> accounts = userAccountRepository.findUserAccountByUsername(username);
+                    if(accounts.isPresent()) {
+                        UserAccount user = accounts.get();
+                        user.setUsername(input);
+                        userAccountRepository.save(user);
+                        return "User " + username + "'s username changed to " + input;
+                    }
+                }
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            default:
+                return "INVALID CHOICE";
+        }
         return "";
     }
 
     public String deleteUserAccount(int id) {
-        return "";
+        UserAccount userToBeDeleted = userAccountRepository.findById(id).get();
+        if(userToBeDeleted == null) {
+            return "User does not exits";
+        } else {
+            userAccountRepository.deleteById(id);
+            return "User successfully deleted";
+        }
     }
 }
