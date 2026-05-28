@@ -48,8 +48,8 @@ public class Appointment {
 
 
     // Constructor
-    public Appointment(String user, LocalDateTime startTime, LocalDateTime endTime, String appointmentTitle, String appointmentDescription, int numOfSlots) {
-        this.username = user.getUsername();
+    public Appointment(String username, LocalDateTime startTime, LocalDateTime endTime, String appointmentTitle, String appointmentDescription, int numOfSlots) {
+        this.username = username;
         this.startTime = startTime;
         this.endTime = endTime;
         this.appointmentTitle = appointmentTitle;
