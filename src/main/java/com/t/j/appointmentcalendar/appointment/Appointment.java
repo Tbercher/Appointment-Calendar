@@ -5,8 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +29,7 @@ public class Appointment {
     @NotBlank
     private String username;
 
-    @NotNull(message = "Time and date must not be null")
+    @NotNull(message = "Time and date must not be null") // Utilize @Future
     private LocalDateTime startTime; // beginning time for appointment time slot
 
     @NotNull(message = "Time and date must not be null")
@@ -44,6 +46,12 @@ public class Appointment {
 
     private boolean reservationStatus;
 
+    // make an reservee class that holds reservees
+    // would also need repository
+    // and services
+    // create dots
+    // exceptions
+    // data validation
     private List<String> reservees = new ArrayList<>(); // Arraylist that holds all reservees usernames
 
 
