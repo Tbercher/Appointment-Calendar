@@ -1,5 +1,6 @@
 package com.t.j.appointmentcalendar.appointment;
 
+import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +23,9 @@ public class AppointmentServices {
         return appointmentRepository.findAll();
     }
 
-    public Optional<Appointment> getAppointmentById(Long id) {
-        return appointmentRepository.findById(id);
+    public Appointment getAppointmentById(Long id) {
+        return appointmentRepository.findById(id)
+                .orElseThrow(() -> new AppointmentNotFoundException(id));
     }
 
     public Appointment createAppointment(Appointment appointment) {
@@ -45,12 +47,11 @@ public class AppointmentServices {
         });
     }
 
-    public boolean deleteAppointment(Long id) {
-        if (appointmentRepository.existsById(id)) {
-            appointmentRepository.deleteById(id);
-            return true;
+    public void deleteAppointment(Long id) {
+        if (!appointmentRepository.existsById(id)) {
+            throw new AppointmentNotFoundException(id);
         }
-        return false;
+        appointmentRepository.deleteById(id);
     }
 
 }

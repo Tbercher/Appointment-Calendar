@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,13 +32,14 @@ public class Appointment {
     @NotNull(message = "Time and date must not be null")
     private LocalDateTime endTime; // end time for appointment time slot
 
-    @NotBlank
+    @NotBlank(message = "There must be a title")
     private String appointmentTitle; // title of appointment
 
-    @NotBlank
+    @NotBlank(message = "Description is mandatory")
     private String appointmentDescription; // description
 
     @NotNull
+    @Size(min = 1, message = "There must be at least 1 a slot initially available.")
     private int numOfSlots; // Records number of slots used for an appointment
 
     private boolean reservationStatus;
