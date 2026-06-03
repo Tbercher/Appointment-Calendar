@@ -1,14 +1,10 @@
 package com.t.j.appointmentcalendar.appointment;
 
-import com.t.j.appointmentcalendar.user.UserAccount;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.Future;
+
+import jakarta.persistence.*;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -46,13 +42,11 @@ public class Appointment {
 
     private boolean reservationStatus;
 
-    // make an reservee class that holds reservees
-    // would also need repository
-    // and services
     // create dots
     // exceptions
     // data validation
-    private List<String> reservees = new ArrayList<>(); // Arraylist that holds all reservees usernames
+    @OneToMany(mappedBy = "appointment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reservee> reservees = new ArrayList<>();
 
 
     // Constructor
@@ -68,6 +62,17 @@ public class Appointment {
     // No args Constructor
     public Appointment() {
 
+    }
+
+    // Utility methods to keep both sides of the relationship in sync
+    public void addReservee(Reservee reservee) {
+        reservees.add(reservee);
+        reservee.setAppointment(this);
+    }
+
+    public void removeReservee(Reservee reservee) {
+        reservees.remove(reservee);
+        reservee.setAppointment(null);
     }
 
 
