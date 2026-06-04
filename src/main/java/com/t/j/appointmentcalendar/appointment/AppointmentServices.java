@@ -1,5 +1,7 @@
 package com.t.j.appointmentcalendar.appointment;
 
+import com.t.j.appointmentcalendar.dto.AppointmentRequest;
+import com.t.j.appointmentcalendar.dto.AppointmentResponse;
 import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,31 +22,51 @@ public class AppointmentServices {
         this.appointmentRepository = appointmentRepository;
     }
 
-    public List<Appointment> getAllAppointments() {
-        return appointmentRepository.findAll();
+    public List<AppointmentResponse> getAllAppointments() {
+        List<Appointment> rawAppointments = appointmentRepository.findAll();
+        return rawAppointments.stream()
+                .map(AppointmentResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    public Appointment getAppointmentById(Long id) {
-        return appointmentRepository.findById(id)
+    public AppointmentResponse getAppointmentById(Long id) {
+
+        Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new AppointmentNotFoundException(id));
+
+        return AppointmentResponse.fromEntity(appointment);
     }
 
-    public Appointment createAppointment(Appointment appointment) {
-        // Business logic could go here (e.g., checking if the time slot is already taken) before saving
-        return appointmentRepository.save(appointment);
+    public AppointmentResponse createAppointment(AppointmentRequest request) {
+        Appointment appointment = new Appointment(
+                request.username(),
+                request.startTime(),
+                request.endTime(),
+                request.appointmentTitle(),
+                request.appointmentDescription(),
+                request.numOfSlots()
+        );
+        appointment.setReservationStatus(request.reservationStatus());
+
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+
+        // MUST map to DTO before returning
+        return AppointmentResponse.fromEntity(savedAppointment);
     }
 
-    public Optional<Appointment> updateAppointment(Long id, Appointment appointmentDetails) {
+    public Optional<AppointmentResponse> updateAppointment(Long id, AppointmentRequest request) {
         return appointmentRepository.findById(id).map(existingAppointment -> {
-            existingAppointment.setAppointmentTitle(appointmentDetails.getAppointmentTitle());
-            existingAppointment.setAppointmentDescription(appointmentDetails.getAppointmentDescription());
-            existingAppointment.setStartTime(appointmentDetails.getStartTime());
-            existingAppointment.setEndTime(appointmentDetails.getEndTime());
-            existingAppointment.setNumOfSlots(appointmentDetails.getNumOfSlots());
-            existingAppointment.setReservationStatus(appointmentDetails.isReservationStatus());
-            existingAppointment.setReservees(appointmentDetails.getReservees());
+            existingAppointment.setAppointmentTitle(request.appointmentTitle());
+            existingAppointment.setAppointmentDescription(request.appointmentDescription());
+            existingAppointment.setStartTime(request.startTime());
+            existingAppointment.setEndTime(request.endTime());
+            existingAppointment.setNumOfSlots(request.numOfSlots());
+            existingAppointment.setReservationStatus(request.reservationStatus());
 
-            return appointmentRepository.save(existingAppointment);
+            Appointment saved = appointmentRepository.save(existingAppointment);
+
+            // MUST map to DTO before returning
+            return AppointmentResponse.fromEntity(saved);
         });
     }
 

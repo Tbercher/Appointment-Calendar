@@ -2,16 +2,14 @@ package com.t.j.appointmentcalendar.appointment;
 
 
 import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
+import com.t.j.appointmentcalendar.dto.AppointmentRequest;
+import com.t.j.appointmentcalendar.dto.AppointmentResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
 
 @RestController
 @RequestMapping("/v1/api/appointment")
@@ -19,50 +17,43 @@ public class AppointmentController {
 
     private final AppointmentServices appointmentServices;
 
-    // Injecting service layer
     public AppointmentController(AppointmentServices appointmentServices) {
         this.appointmentServices = appointmentServices;
     }
 
-
-    // All @GetMapping
-
-    // Gets all appointments
+    // 1. GET ALL
     @GetMapping
-    public ResponseEntity<List<Appointment>> getAllAppointments() {
-        return new ResponseEntity<>(appointmentServices.getAllAppointments(), HttpStatus.OK);
+    public ResponseEntity<List<AppointmentResponse>> getAllAppointments() {
+        List<AppointmentResponse> responses = appointmentServices.getAllAppointments();
+        return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
-    // gets specific appointment whether that be reservee or the creators
+    // 2. GET BY ID
     @GetMapping("/{id}")
-    public Appointment getAppointmentById(@PathVariable Long id) {
-        return appointmentServices.getAppointmentById(id);
+    public ResponseEntity<AppointmentResponse> getAppointmentById(@PathVariable Long id) {
+        AppointmentResponse response = appointmentServices.getAppointmentById(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-
+    // 3. CREATE (POST)
     @PostMapping
-    public ResponseEntity<Appointment> createAppointment(@Valid @RequestBody Appointment appointment) {
-        Appointment savedAppointment = appointmentServices.createAppointment(appointment);
+    public ResponseEntity<AppointmentResponse> createAppointment(@Valid @RequestBody AppointmentRequest request) {
+        AppointmentResponse savedAppointment = appointmentServices.createAppointment(request);
         return new ResponseEntity<>(savedAppointment, HttpStatus.CREATED);
     }
 
-
+    // 4. UPDATE (PUT)
     @PutMapping("/{id}")
-    public ResponseEntity<Appointment> updateAppointment(@PathVariable Long id, @Valid @RequestBody Appointment appointmentDetails) {
-
-        // Attempt to update, and throw the exception immediately if the Optional is empty
-        Appointment updatedAppointment = appointmentServices.updateAppointment(id, appointmentDetails)
+    public ResponseEntity<AppointmentResponse> updateAppointment(@PathVariable Long id, @Valid @RequestBody AppointmentRequest request) {
+        AppointmentResponse updatedAppointment = appointmentServices.updateAppointment(id, request)
                 .orElseThrow(() -> new AppointmentNotFoundException(id));
-
-        // If we reach this line, the appointment was successfully updated
-        return ResponseEntity.ok(updatedAppointment);
+        return new ResponseEntity<>(updatedAppointment, HttpStatus.OK);
     }
 
+    // 5. DELETE
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAppointment(@PathVariable Long id) {
         appointmentServices.deleteAppointment(id);
         return ResponseEntity.noContent().build();
     }
-
 }
-
