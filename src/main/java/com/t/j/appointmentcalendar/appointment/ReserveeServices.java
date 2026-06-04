@@ -69,7 +69,7 @@ public class ReserveeServices {
             Appointment appointment = appointmentRepository.findById(request.appointmentId())
                     .orElseThrow(() -> new AppointmentNotFoundException(request.appointmentId()));
 
-            
+
             existingReservee.setUsername(request.username());
             existingReservee.setEmail(request.email());
             existingReservee.setAppointment(appointment);
