@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
             Exception ex, WebRequest request){
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
-        body.put("message", "An unexpected error has occured.");
+        body.put("message", "An unexpected error has occurred.");
         body.put("details", ex.getMessage());
 
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);

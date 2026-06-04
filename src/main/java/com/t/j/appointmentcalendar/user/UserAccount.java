@@ -11,6 +11,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
 
+// todo: Create dto's , add more validation , exception handling
+
 @Entity
 public class UserAccount {
 
@@ -22,11 +24,11 @@ public class UserAccount {
     @NotBlank
     private String password; // used later for logging in
     @JdbcTypeCode(SqlTypes.JSON)
-    private UserDetails userDetails;
+    private UserDetails userDetails; // used for storing information in json
     @Email
     private String email; // user's email
 
-// constructor
+    // constructor
     public UserAccount(String username, String password, UserDetails userDetails, String email) {
         this.username = username;
         this.password = password;

@@ -1,6 +1,8 @@
 package com.t.j.appointmentcalendar.user;
 
 
+import com.t.j.appointmentcalendar.exception.UserDoesNotExist;
+import com.t.j.appointmentcalendar.exception.UserNotFound;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,13 +26,9 @@ public class UserServices {
     }
 
     // The logic to get a specific account
-    public UserAccount getSpefifiedUser(int id) {
-        Optional<UserAccount> userTest = userAccountRepository.findById(id);
-        if(userTest.isPresent()) {
-            return userTest.get();
-        } else {
-            return null;
-        }
+    public UserDTOResponse getSpefifiedUser(int id) {
+        UserAccount user = userAccountRepository.findById(id).orElseThrow(() -> new UserNotFound(id));
+        return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail());
     }
 
     public String addUserAccount(UserAccount userAccount) {
@@ -56,9 +54,10 @@ public class UserServices {
                         user.setUsername(input);
                         userAccountRepository.save(user);
                         return "User " + username + "'s username changed to " + input;
+                    } else {
+                        throw new UserDoesNotExist(username);
                     }
                 }
-                break;
             case 2:
                 break;
             case 3:
@@ -72,7 +71,7 @@ public class UserServices {
     public String deleteUserAccount(int id) {
         UserAccount userToBeDeleted = userAccountRepository.findById(id).get();
         if(userToBeDeleted == null) {
-            return "User does not exits";
+            throw new UserNotFound(id);
         } else {
             userAccountRepository.deleteById(id);
             return "User successfully deleted";
