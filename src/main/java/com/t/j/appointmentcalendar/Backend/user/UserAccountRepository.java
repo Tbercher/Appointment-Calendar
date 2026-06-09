@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.user;
+package com.t.j.appointmentcalendar.Backend.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

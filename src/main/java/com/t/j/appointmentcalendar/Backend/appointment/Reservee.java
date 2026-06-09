@@ -1,7 +1,6 @@
-package com.t.j.appointmentcalendar.appointment;
+package com.t.j.appointmentcalendar.Backend.appointment;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.t.j.appointmentcalendar.appointment.Appointment;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

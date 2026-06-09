@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.exception;
+package com.t.j.appointmentcalendar.Backend.exception;
 
 public class AppointmentNotFoundException extends RuntimeException {
     public AppointmentNotFoundException(Long id) {

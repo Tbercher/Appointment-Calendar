@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.user;
+package com.t.j.appointmentcalendar.Backend.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

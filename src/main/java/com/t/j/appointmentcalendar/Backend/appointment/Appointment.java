@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.appointment;
+package com.t.j.appointmentcalendar.Backend.appointment;
 
 
 import jakarta.persistence.*;

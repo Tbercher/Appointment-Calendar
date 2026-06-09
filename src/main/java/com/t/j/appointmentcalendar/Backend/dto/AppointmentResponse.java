@@ -1,6 +1,6 @@
-package com.t.j.appointmentcalendar.dto;
+package com.t.j.appointmentcalendar.Backend.dto;
 
-import com.t.j.appointmentcalendar.appointment.Appointment;
+import com.t.j.appointmentcalendar.Backend.appointment.Appointment;
 
 import java.time.LocalDateTime;
 

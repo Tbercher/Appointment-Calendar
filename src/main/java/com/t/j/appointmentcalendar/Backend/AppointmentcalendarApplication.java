@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar;
+package com.t.j.appointmentcalendar.Backend;
 
 
 import org.springframework.boot.SpringApplication;

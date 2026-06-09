@@ -1,9 +1,9 @@
-package com.t.j.appointmentcalendar.appointment;
+package com.t.j.appointmentcalendar.Backend.appointment;
 
 
-import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
-import com.t.j.appointmentcalendar.dto.AppointmentRequest;
-import com.t.j.appointmentcalendar.dto.AppointmentResponse;
+import com.t.j.appointmentcalendar.Backend.exception.AppointmentNotFoundException;
+import com.t.j.appointmentcalendar.Backend.dto.AppointmentRequest;
+import com.t.j.appointmentcalendar.Backend.dto.AppointmentResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

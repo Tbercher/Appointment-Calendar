@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.exception;
+package com.t.j.appointmentcalendar.Backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

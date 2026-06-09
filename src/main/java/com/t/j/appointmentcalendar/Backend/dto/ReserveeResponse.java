@@ -1,6 +1,6 @@
-package com.t.j.appointmentcalendar.dto;
+package com.t.j.appointmentcalendar.Backend.dto;
 
-import com.t.j.appointmentcalendar.appointment.Reservee;
+import com.t.j.appointmentcalendar.Backend.appointment.Reservee;
 
 public record ReserveeResponse(
         Long id,

@@ -1,12 +1,11 @@
-package com.t.j.appointmentcalendar.appointment;
+package com.t.j.appointmentcalendar.Backend.appointment;
 
-import com.t.j.appointmentcalendar.dto.AppointmentRequest;
-import com.t.j.appointmentcalendar.dto.AppointmentResponse;
-import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
+import com.t.j.appointmentcalendar.Backend.dto.AppointmentRequest;
+import com.t.j.appointmentcalendar.Backend.dto.AppointmentResponse;
+import com.t.j.appointmentcalendar.Backend.exception.AppointmentNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

@@ -1,8 +1,8 @@
-package com.t.j.appointmentcalendar.appointment;
+package com.t.j.appointmentcalendar.Backend.appointment;
 
-import com.t.j.appointmentcalendar.dto.ReserveeRequest;
-import com.t.j.appointmentcalendar.dto.ReserveeResponse;
-import com.t.j.appointmentcalendar.exception.AppointmentNotFoundException;
+import com.t.j.appointmentcalendar.Backend.dto.ReserveeRequest;
+import com.t.j.appointmentcalendar.Backend.dto.ReserveeResponse;
+import com.t.j.appointmentcalendar.Backend.exception.AppointmentNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.dto;
+package com.t.j.appointmentcalendar.Backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

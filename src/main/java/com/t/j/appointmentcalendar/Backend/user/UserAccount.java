@@ -1,4 +1,4 @@
-package com.t.j.appointmentcalendar.user;
+package com.t.j.appointmentcalendar.Backend.user;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,8 +8,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import java.util.ArrayList;
 
 // todo: Create dto's , add more validation , exception handling
 //test
