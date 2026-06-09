@@ -12,6 +12,7 @@ import org.hibernate.type.SqlTypes;
 import java.util.ArrayList;
 
 // todo: Create dto's , add more validation , exception handling
+//test
 
 @Entity
 public class UserAccount {
