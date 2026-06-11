@@ -1,0 +1,58 @@
+:root {
+  /* Core Saints Row Purple */
+  --saints-purple: #592683;
+  --saints-purple-dark: #431c63;
+  --saints-purple-light: #8858b5;
+  
+  /* Dark Theme Palette */
+  --dark-bg: #0d0714;
+  --dark-surface: #170c24;
+  --dark-border: #2a1640;
+  --dark-text: #e6dcf2;
+  --dark-muted: #9e8cbe;
+}
+
+/* 1. Global Background & Text */
+body {
+  background-color: var(--dark-bg) !important;
+  color: var(--dark-text) !important;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* 2. Override Tailwind's Light Backgrounds */
+.bg-gray-50 { background-color: var(--dark-bg) !important; }
+.bg-white { background-color: var(--dark-surface) !important; }
+.bg-gray-100 { background-color: #0a0510 !important; }
+
+/* 3. Override Tailwind's Light Borders */
+.border-gray-100, 
+.border-gray-200, 
+.border-gray-300 { 
+  border-color: var(--dark-border) !important; 
+}
+
+/* 4. Override Tailwind's Dark Text */
+.text-gray-900 { color: var(--dark-text) !important; }
+.text-gray-600, 
+.text-gray-500 { 
+  color: var(--dark-muted) !important; 
+}
+
+/* 5. Fix Input Fields for Dark Mode */
+input[type="email"], 
+input[type="password"] {
+  background-color: var(--dark-bg) !important;
+  color: var(--dark-text) !important;
+  border-color: var(--dark-border) !important;
+}
+
+input::placeholder {
+  color: var(--dark-muted) !important;
+}
+
+/* 6. Custom styling for the "Unavailable" gray buttons */
+button:disabled {
+  background-color: var(--dark-border) !important;
+  color: var(--dark-muted) !important;
+}
