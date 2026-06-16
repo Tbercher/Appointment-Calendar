@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/vi/api/user")
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserAccountController {
 
     private final UserServices userServices;
@@ -28,6 +29,14 @@ public class UserAccountController {
     public ResponseEntity<UserDTOResponse> getUser(@PathVariable int id) {
         UserDTOResponse foundAcc = userServices.getSpefifiedUser(id);
         return ResponseEntity.status(HttpStatus.FOUND).body(foundAcc);
+    }
+
+    // To get a user base on email and the correct password
+    @PostMapping("/login")
+    public ResponseEntity<UserDTOResponse> loginUser(@RequestBody UserLoginRequestDTO request) {
+        System.out.println("Login endpoint hit");
+        UserDTOResponse user = userServices.loginAsUser(request);
+        return ResponseEntity.ok(user);
     }
     // To add a user
     @PostMapping("/addUser")

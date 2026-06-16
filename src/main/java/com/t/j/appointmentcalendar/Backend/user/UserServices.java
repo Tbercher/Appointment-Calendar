@@ -29,6 +29,19 @@ public class UserServices {
         return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail());
     }
 
+    public UserDTOResponse loginAsUser(UserLoginRequestDTO request) {
+        UserAccount user = userAccountRepository.findUserAccountByEmail(request.email());
+        if (user != null) {
+            if(user.getPassword().equals(request.password())) {
+                return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail());
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
     public String addUserAccount(UserAccount userAccount) {
         Optional<UserAccount> takenUsersAndEmails = userAccountRepository.findUserAccountByUsernameOrEmail(userAccount.getUsername(), userAccount.getEmail());
         if(takenUsersAndEmails.isPresent()) {

@@ -1,18 +1,15 @@
 package com.t.j.appointmentcalendar.Backend.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-// todo: Create dto's , add more validation , exception handling
 //test
 
 @Entity
+@Table(name = "users")
 public class UserAccount {
 
     @Id
