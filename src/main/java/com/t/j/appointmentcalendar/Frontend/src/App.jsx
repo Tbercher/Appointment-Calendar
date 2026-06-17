@@ -1,9 +1,5 @@
 import { useState } from "react";
 
-const DUMMY_USERS = [
-  { id: 1, name: "Boss", email: "boss@saints.com", password: "password123" }
-];
-
 const MASTER_SLOTS = [
   { id: 's1', time: '9:00 AM' },
   { id: 's2', time: '10:00 AM' },
@@ -61,11 +57,25 @@ function LoginPage({ onLogin }) {
   const [password, setPassword] = useState('');
   const [shake, setShake] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const user = DUMMY_USERS.find(u => u.email === email && u.password === password);
-    if (user) onLogin(user);
-    else {
+    try {
+      const res = await fetch('http://localhost:8080/vi/api/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) {
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        return;
+      }
+
+      const user = await res.json();
+      onLogin(user);
+
+    } catch (err) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
@@ -124,7 +134,7 @@ function LoginPage({ onLogin }) {
             <input
               type="email" required value={email} onChange={e => setEmail(e.target.value)}
               className="login-input"
-              placeholder="boss@saints.com"
+              placeholder="YourEmail@Email.com"
               style={{
                 width: '100%', padding: '10px 14px', fontSize: '15px',
                 border: '1px solid #dadce0', borderRadius: '8px',
@@ -157,7 +167,7 @@ function LoginPage({ onLogin }) {
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#bbb' }}>
-          Hint: boss@saints.com / password123
+
         </p>
       </div>
     </div>
@@ -583,7 +593,7 @@ function CalendarPage({ user, onSignOut }) {
             background: 'linear-gradient(135deg,#592683,#7b2fbe)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontSize: '14px', fontWeight: 700
-          }}>{user.name[0]}</div>
+          }}>{user.username[0]}</div>
           <button onClick={onSignOut} style={{
             background: 'none', border: '1px solid #dadce0', borderRadius: '6px',
             padding: '6px 12px', fontSize: '13px', color: '#592683', cursor: 'pointer', fontWeight: 500
