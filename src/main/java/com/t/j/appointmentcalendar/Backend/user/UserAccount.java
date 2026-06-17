@@ -35,6 +35,10 @@ public class UserAccount {
 
     }
 
+    public Long getUserId() {
+        return id;
+    }
+
     public String getUsername() {
         return username;
     }

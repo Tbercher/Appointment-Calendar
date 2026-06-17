@@ -1,6 +1,7 @@
 package com.t.j.appointmentcalendar.Backend.user;
 
 
+import com.t.j.appointmentcalendar.Backend.event.EventRepository;
 import com.t.j.appointmentcalendar.Backend.exception.UserDoesNotExist;
 import com.t.j.appointmentcalendar.Backend.exception.UserNotFound;
 import org.springframework.stereotype.Service;
@@ -13,9 +14,11 @@ import java.util.Optional;
 public class UserServices {
 
     private final UserAccountRepository userAccountRepository;
+    private final EventRepository eventRepository;
 
-    public UserServices(UserAccountRepository userAccountRepository) {
+    public UserServices(UserAccountRepository userAccountRepository, EventRepository eventRepository) {
         this.userAccountRepository = userAccountRepository;
+        this.eventRepository = eventRepository;
     }
 
     // connects to getUsers in the controller
@@ -24,16 +27,16 @@ public class UserServices {
     }
 
     // The logic to get a specific account
-    public UserDTOResponse getSpefifiedUser(int id) {
-        UserAccount user = userAccountRepository.findById(id).orElseThrow(() -> new UserNotFound(id));
-        return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail());
+    public UserDTOResponse getSpefifiedUser(Long id) {
+        UserAccount user = userAccountRepository.findById(Math.toIntExact(id)).orElseThrow(() -> new UserNotFound(id));
+        return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail(), eventRepository.findEventsByUserId(id));
     }
 
     public UserDTOResponse loginAsUser(UserLoginRequestDTO request) {
         UserAccount user = userAccountRepository.findUserAccountByEmail(request.email());
         if (user != null) {
             if(user.getPassword().equals(request.password())) {
-                return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail());
+                return new UserDTOResponse(user.getUsername(), user.getUserDetails(), user.getEmail(), eventRepository.findEventsByUserId(user.getUserId()));
             } else {
                 return null;
             }

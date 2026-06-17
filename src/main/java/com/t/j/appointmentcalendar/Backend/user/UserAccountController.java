@@ -27,7 +27,7 @@ public class UserAccountController {
     // To get a specific user account
     @GetMapping("/{id}")
     public ResponseEntity<UserDTOResponse> getUser(@PathVariable int id) {
-        UserDTOResponse foundAcc = userServices.getSpefifiedUser(id);
+        UserDTOResponse foundAcc = userServices.getSpefifiedUser((long) id);
         return ResponseEntity.status(HttpStatus.FOUND).body(foundAcc);
     }
 
