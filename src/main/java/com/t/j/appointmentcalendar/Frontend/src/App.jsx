@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const MASTER_SLOTS = [
   { id: 's1', time: '9:00 AM' },
@@ -13,7 +13,7 @@ const NOW = new Date();
 const CURRENT_YEAR = NOW.getFullYear();
 const CURRENT_MONTH = NOW.getMonth();
 const TODAY_DATE = NOW.getDate();
-
+/*
 const INITIAL_APPOINTMENTS = [
   { id: 'a1', date: 5, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's1', time: '9:00 AM', title: 'Franchise Meeting' },
   { id: 'a2', date: 12, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's4', time: '1:00 PM', title: 'Supply Drop' },
@@ -21,6 +21,7 @@ const INITIAL_APPOINTMENTS = [
   { id: 'a4', date: 18, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's6', time: '3:00 PM', title: 'Turf Strategy' },
   { id: 'a5', date: 25, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's2', time: '10:00 AM', title: 'Inventory Check' },
 ];
+*/
 
 const EVENT_COLORS = [
   { bg: '#4285F4', light: '#EAF1FF' },
@@ -73,6 +74,7 @@ function LoginPage({ onLogin }) {
       }
 
       const user = await res.json();
+      console.log(user);
       onLogin(user);
 
     } catch (err) {
@@ -216,78 +218,252 @@ function MiniCalendar({ year, month, onNavigate, selectedDay }) {
 }
 
 // ─── BOOKING MODAL ────────────────────────────────────────────────────────────
-function BookingModal({ cell, appointments, onBook, onCancel, onClose }) {
-  const dateStr = new Date(cell.year, cell.month, cell.day).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-  });
-  const dayAppts = appointments.filter(a => a.date === cell.day && a.month === cell.month && a.year === cell.year);
+function BookingModal({ cell, onClose, user, loadEvents }) {
+  const [eventName, setEventName] = useState('');
+  const [description, setDescription] = useState('');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('10:00');
+  const [appointmentPointer, setAppointmentPointer] = useState('');
+  const [repeating, setRepeating] = useState(false);
+  const [error, setError] = useState('');
+
+  const dateString =
+    `${cell.year}-${String(cell.month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
+
+  const handleSave = async () => {
+    if (!eventName.trim()) {
+      setError('Event name is required');
+      return;
+    }
+
+    const startDate = `${dateString}T${startTime}:00`;
+    const endDate = `${dateString}T${endTime}:00`;
+
+    if (new Date(startDate) >= new Date(endDate)) {
+      setError('End time must be after start time');
+      return;
+    }
+
+    const payload = {
+      eventName: eventName.trim(),
+      start: `${dateString}T${startTime}:00`,
+      end: `${dateString}T${endTime}:00`,
+      appointmentPointer: appointmentPointer
+      ? Number(appointmentPointer)
+      : appointmentPointer,
+      description,
+      user: user.email,
+      isRepeating: repeating
+    };
+    try {
+      const response = await fetch(
+        'http://localhost:8080/v1/api/event/PostEvent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to create event');
+      }
+      await loadEvents();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px',
+    border: '1px solid #dadce0',
+    borderRadius: '8px',
+    fontSize: '14px'
+  };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: '16px', fontFamily: "'Google Sans','Segoe UI',sans-serif"
-    }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        background: '#fff', borderRadius: '12px',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-        width: '100%', maxWidth: '440px', overflow: 'hidden'
-      }}>
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1100
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#fff',
+          width: '100%',
+          maxWidth: '600px',
+          borderRadius: '14px',
+          overflow: 'hidden',
+          boxShadow: '0 20px 50px rgba(0,0,0,.25)'
+        }}
+      >
         {/* Header */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f1f3f4', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontSize: '18px', fontWeight: 500, color: '#202124' }}>{dateStr}</div>
-            <div style={{ fontSize: '13px', color: '#5f6368', marginTop: '4px' }}>
-              {dayAppts.length} appointment{dayAppts.length !== 1 ? 's' : ''} scheduled
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5f6368', fontSize: '20px', lineHeight: 1, padding: '4px' }}>×</button>
+        <div
+          style={{
+            padding: '18px 24px',
+            borderBottom: '1px solid #eee',
+            background: 'linear-gradient(135deg,#f9f4ff,#f4f0ff)'
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              color: '#592683',
+              fontSize: '18px'
+            }}
+          >
+            Create Event
+          </h2>
         </div>
 
-        {/* Slots */}
-        <div style={{ padding: '16px 20px', maxHeight: '360px', overflowY: 'auto' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#5f6368', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '12px' }}>
-            Available Time Slots
+        {/* Body */}
+        <div
+          style={{
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}
+        >
+          <input
+            placeholder="Event Name"
+            value={eventName}
+            onChange={e => setEventName(e.target.value)}
+            style={inputStyle}
+          />
+
+          <textarea
+            rows={3}
+            placeholder="Description"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            style={inputStyle}
+          />
+
+          <div>
+            <label>Date</label>
+            <input
+              type="date"
+              value={dateString}
+              disabled
+              style={inputStyle}
+            />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {MASTER_SLOTS.map(slot => {
-              const booked = appointments.find(a =>
-                a.slotId === slot.id && a.date === cell.day && a.month === cell.month && a.year === cell.year
-              );
-              return (
-                <div key={slot.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 14px', borderRadius: '8px',
-                  background: booked ? '#f8f9fa' : '#f3f0ff',
-                  border: `1px solid ${booked ? '#e0e0e0' : '#c9b3e8'}`
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '8px', height: '8px', borderRadius: '50%',
-                      background: booked ? '#bdbdbd' : '#592683'
-                    }} />
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: booked ? '#9e9e9e' : '#202124', textDecoration: booked ? 'line-through' : 'none' }}>
-                      {slot.time}
-                    </span>
-                    {booked && <span style={{ fontSize: '12px', color: '#9e9e9e' }}>— {booked.title}</span>}
-                  </div>
-                  {booked ? (
-                    <button onClick={() => onCancel(booked.id)} style={{
-                      fontSize: '12px', color: '#d32f2f', background: 'none', border: 'none',
-                      cursor: 'pointer', padding: '4px 8px', borderRadius: '4px',
-                      fontWeight: 500
-                    }}>Cancel</button>
-                  ) : (
-                    <button onClick={() => onBook(slot.id, slot.time)} style={{
-                      fontSize: '12px', color: '#fff', background: '#592683',
-                      border: 'none', cursor: 'pointer', padding: '5px 14px',
-                      borderRadius: '6px', fontWeight: 500
-                    }}>Book</button>
-                  )}
-                </div>
-              );
-            })}
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px'
+            }}
+          >
+            <div>
+              <label>Start Time</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={e => setStartTime(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label>End Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={e => setEndTime(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
           </div>
+
+          <div>
+            <label>Appointment ID (optional)</label>
+            <input
+              type="number"
+              value={appointmentPointer}
+              onChange={e => setAppointmentPointer(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={repeating}
+              onChange={e => setRepeating(e.target.checked)}
+            />
+            Repeat Event
+          </label>
+
+          {error && (
+            <div
+              style={{
+                background: '#fce8e6',
+                color: '#c62828',
+                padding: '10px',
+                borderRadius: '8px'
+              }}
+            >
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #eee',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '10px'
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 18px',
+              border: '1px solid #dadce0',
+              background: '#fff',
+              borderRadius: '8px'
+            }}
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '10px 22px',
+              border: 'none',
+              borderRadius: '8px',
+              background: '#592683',
+              color: '#fff',
+              fontWeight: 600
+            }}
+          >
+            Create Event
+          </button>
         </div>
       </div>
     </div>
@@ -297,6 +473,7 @@ function BookingModal({ cell, appointments, onBook, onCancel, onClose }) {
 // ─── CREATE TASK MODAL ───────────────────────────────────────────────────────
 function CreateTaskModal({ onClose, onSave }) {
   const [taskName, setTaskName] = useState('');
+  const [username, setUsername] = useState('');
   const [description, setDescription] = useState('');
   const [capacity, setCapacity] = useState(1);
   const [date, setDate] = useState('');
@@ -499,9 +676,83 @@ function CreateTaskModal({ onClose, onSave }) {
 // ─── MAIN CALENDAR ────────────────────────────────────────────────────────────
 function CalendarPage({ user, onSignOut }) {
   const [currentDate, setCurrentDate] = useState(new Date(CURRENT_YEAR, CURRENT_MONTH, 1));
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
+  const [appointments, setAppointments] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+
+  
+
+    const loadEvents = async () => {
+
+      try {
+
+        const response = await fetch(
+          `http://localhost:8080/v1/api/event/${user.email}`
+        );
+
+
+        if (!response.ok) {
+          throw new Error("Could not load events");
+        }
+
+
+        const events = await response.json();
+
+
+        const formattedEvents = events.map(event => {
+
+          const start = new Date(event.startDate);
+        const end = new Date(event.endDate);
+
+        return {
+
+          id: `${event.userId}_${start.getTime()}`,
+
+          date: start.getDate(),
+
+          month: start.getMonth(),
+
+          year: start.getFullYear(),
+
+          time:
+            `${start.toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit'
+            })} - ${end.toLocaleTimeString([], {
+              hour: 'numeric',
+              minute: '2-digit'
+            })}`,
+
+          title: event.eventName,
+
+          description: event.eventDescription,
+
+          appointmentPointer: event.appointmentPointer,
+
+          repeating: event.repeating
+
+        };
+
+        });
+
+        console.log(formattedEvents);
+        setAppointments(formattedEvents);
+
+
+      } catch(err) {
+
+        console.error(err);
+
+      }
+
+    };
+
+    useEffect(() =>{
+      loadEvents();
+    }, []);
+
+
+  
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -722,9 +973,8 @@ function CalendarPage({ user, onSignOut }) {
       {selectedCell && (
         <BookingModal
           cell={selectedCell}
-          appointments={appointments}
-          onBook={handleBook}
-          onCancel={handleCancel}
+          user={user}
+          loadEvents={loadEvents}
           onClose={() => setSelectedCell(null)}
         />
       )}
