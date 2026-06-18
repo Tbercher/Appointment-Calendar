@@ -2,6 +2,7 @@ package com.t.j.appointmentcalendar.Backend.event;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -9,15 +10,15 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 public class Event {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @NotBlank(message = "An event must have a title")
     @Column(name = "event_name")
     private String eventName;
-    @NotBlank(message = "An event must have a start time")
+    @NotNull(message = "An event must have a start time")
     @Column(name = "event_start")
     private LocalDateTime startDate;
-    @NotBlank(message = "An event must have an ending")
+    @NotNull(message = "An event must have an ending")
     @Column(name = "event_end", nullable = true)
     private LocalDateTime endDate;
     @Column(name = "external_appointment", nullable = true)

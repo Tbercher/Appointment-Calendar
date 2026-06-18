@@ -23,9 +23,9 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.OK).body(eventServices.getAllEvents());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<List<Event>> getUserEvents(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.OK).body(eventServices.getAllUserEvents(id));
+    @GetMapping("/{email}")
+    public ResponseEntity<List<Event>> getUserEvents(@PathVariable String email) {
+        return ResponseEntity.status(HttpStatus.OK).body(eventServices.getAllUserEvents(email));
     }
 
     @PostMapping("/PostEvent")

@@ -1,9 +1,7 @@
 package com.t.j.appointmentcalendar.Backend.event;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.PastOrPresent;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.*;
 import org.aspectj.lang.annotation.After;
 
 import java.time.LocalDateTime;
@@ -11,15 +9,16 @@ import java.time.LocalDateTime;
 public record EventRequest(
         @NotBlank
         String eventName,
-        @Past
+        @FutureOrPresent
         LocalDateTime start,
-        @PastOrPresent
+        @Future
         LocalDateTime end,
         int appointmentPointer,
         String description,
+        @NotBlank
+        String user,
         @NotNull
-        int user,
-        @NotNull
+        @JsonProperty("isRepeating")
         boolean isRepeating
 ) {
 }
