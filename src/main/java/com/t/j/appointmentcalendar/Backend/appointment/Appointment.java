@@ -39,7 +39,6 @@ public class Appointment {
     private String appointmentDescription; // description
 
     @NotNull
-    @Size(min = 1, message = "There must be at least 1 a slot initially available.")
     private int numOfSlots; // Records number of slots used for an appointment
 
     private boolean reservationStatus;

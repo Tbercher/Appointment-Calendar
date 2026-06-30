@@ -33,7 +33,8 @@ const EVENT_COLORS = [
 ];
 
 function getEventColor(id) {
-  const idx = id.charCodeAt(id.length - 1) % EVENT_COLORS.length;
+  const str = String(id);
+  const idx = str.charCodeAt(str.length - 1) % EVENT_COLORS.length;
   return EVENT_COLORS[idx];
 }
 
@@ -476,42 +477,59 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
 }
 
 // ─── CREATE TASK MODAL ───────────────────────────────────────────────────────
-function CreateTaskModal({ onClose, onSave }) {
+function CreateTaskModal({ onClose, loadAppointments, user }) {
   const [taskName, setTaskName] = useState('');
-  const [username, setUsername] = useState('');
   const [description, setDescription] = useState('');
   const [capacity, setCapacity] = useState(1);
   const [date, setDate] = useState('');
   const [timeStart, setTimeStart] = useState('');
   const [timeEnd, setTimeEnd] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const formatTime = (t) => {
-    if (!t) return '';
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour = h % 12 || 12;
-    return `${hour}:${m.toString().padStart(2,'0')} ${ampm}`;
-  };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!taskName.trim()) { setError('Please enter an appointment name.'); return; }
+    if (!description.trim()) { setError('Please enter a description.'); return; }
     if (!date) { setError('Please select a date.'); return; }
     if (!timeStart || !timeEnd) { setError('Please set both a start and end time.'); return; }
     if (timeStart >= timeEnd) { setError('End time must be after start time.'); return; }
-    const d = new Date(date + 'T00:00:00');
-    onSave([{
-      id: `task_${Date.now()}`,
-      date: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear(),
-      slotId: `custom_${Date.now()}`,
-      time: `${formatTime(timeStart)} – ${formatTime(timeEnd)}`,
-      title: taskName.trim(),
-      capacity,
-      spotsLeft: capacity,
-    }]);
-    onClose();
+
+    const startTime = `${date}T${timeStart}:00`;
+    const endTime = `${date}T${timeEnd}:00`;
+
+    const payload = {
+      username: user.username,
+      startTime,
+      endTime,
+      appointmentTitle: taskName.trim(),
+      appointmentDescription: description.trim(),
+      numOfSlots: capacity,
+      reservationStatus: false
+    };
+
+    setSaving(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8080/v1/api/appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        throw new Error(errBody?.details || errBody?.message || 'Failed to create appointment');
+      }
+
+      await response.json();
+      await loadAppointments();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputStyle = {
@@ -548,7 +566,7 @@ function CreateTaskModal({ onClose, onSave }) {
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </div>
-            <span style={{ fontSize: '17px', fontWeight: 600, color: '#1a0a2e' }}>Create Task</span>
+            <span style={{ fontSize: '17px', fontWeight: 600, color: '#1a0a2e' }}>Create Appointment</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5f6368', fontSize: '22px', lineHeight: 1, padding: '4px 8px', borderRadius: '6px' }}>×</button>
         </div>
@@ -570,7 +588,7 @@ function CreateTaskModal({ onClose, onSave }) {
 
           {/* Description */}
           <div>
-            <label style={labelStyle}>Description <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#aaa' }}>(optional)</span></label>
+            <label style={labelStyle}>Description</label>
             <textarea
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Add any notes or details..."
@@ -662,16 +680,16 @@ function CreateTaskModal({ onClose, onSave }) {
           padding: '16px 24px', borderTop: '1px solid #f1f3f4',
           display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#fafafa'
         }}>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} disabled={saving} style={{
             padding: '9px 20px', borderRadius: '8px', border: '1px solid #dadce0',
-            background: '#fff', color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: 'pointer'
+            background: '#fff', color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: saving ? 'default' : 'pointer'
           }}>Cancel</button>
-          <button onClick={handleSave} style={{
+          <button onClick={handleSave} disabled={saving} style={{
             padding: '9px 24px', borderRadius: '8px', border: 'none',
             background: 'linear-gradient(135deg,#592683,#7b2fbe)',
-            color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(89,38,131,0.3)'
-          }}>Save Task</button>
+            color: '#fff', fontSize: '14px', fontWeight: 600, cursor: saving ? 'default' : 'pointer',
+            boxShadow: '0 2px 8px rgba(89,38,131,0.3)', opacity: saving ? 0.7 : 1
+          }}>{saving ? 'Saving…' : 'Save Task'}</button>
         </div>
       </div>
     </div>
@@ -682,10 +700,13 @@ function CreateTaskModal({ onClose, onSave }) {
 function CalendarPage({ user, onSignOut }) {
   const [currentDate, setCurrentDate] = useState(new Date(CURRENT_YEAR, CURRENT_MONTH, 1));
   const [appointments, setAppointments] = useState([]);
+  const [appointmentSlots, setAppointmentSlots] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedApptId, setHighlightedApptId] = useState(null);
 
-  
+
 
     const loadEvents = async () => {
 
@@ -752,12 +773,53 @@ function CalendarPage({ user, onSignOut }) {
 
     };
 
+    const loadAppointments = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/v1/api/appointment');
+
+        if (!response.ok) {
+          throw new Error("Could not load appointments");
+        }
+
+        const data = await response.json();
+
+        const formatted = data.map(appt => {
+          const start = new Date(appt.startTime);
+          const end = new Date(appt.endTime);
+
+          return {
+            id: `appt_${appt.id}`,
+            date: start.getDate(),
+            month: start.getMonth(),
+            year: start.getFullYear(),
+            time:
+              `${start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
+            title: appt.appointmentTitle,
+            description: appt.appointmentDescription,
+            capacity: appt.numOfSlots,
+            spotsLeft: appt.availableSlots,
+            reservationStatus: appt.reservationStatus,
+            username: appt.username,
+          };
+        });
+
+        setAppointmentSlots(formatted);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     useEffect(() =>{
       loadEvents();
+      loadAppointments();
     }, []);
 
+    // Combined list used for rendering the grid and for search â events the
+    // user has booked, plus every appointment slot in the appointment table.
+    const calendarItems = [...appointments, ...appointmentSlots];
 
-  
+
+
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -778,6 +840,21 @@ function CalendarPage({ user, onSignOut }) {
 
   const handleCancel = (id) => setAppointments(prev => prev.filter(a => a.id !== id));
 
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const searchResults = trimmedQuery
+    ? calendarItems
+        .filter(a => a.title && a.title.toLowerCase().includes(trimmedQuery))
+        .sort((a, b) => new Date(a.year, a.month, a.date) - new Date(b.year, b.month, b.date))
+        .slice(0, 8)
+    : [];
+
+  const goToSearchResult = (appt) => {
+    setCurrentDate(new Date(appt.year, appt.month, 1));
+    setHighlightedApptId(appt.id);
+    setSearchQuery('');
+    setTimeout(() => setHighlightedApptId(null), 2500);
+  };
+
   return (
     <div style={{
       position: 'fixed', inset: 0,
@@ -796,6 +873,12 @@ function CalendarPage({ user, onSignOut }) {
         .slot-btn:hover { opacity: 0.85; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 3px; }
+        .search-result-item:hover { background: #f6f8ff !important; }
+        @keyframes pulseHighlight {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(244,180,0,0.7); }
+          50% { box-shadow: 0 0 0 5px rgba(244,180,0,0); }
+        }
+        .highlight-pulse { animation: pulseHighlight 0.9s ease-in-out 2; outline: 2px solid #F4B400; }
       `}</style>
 
       {/* ── TOP BAR ── */}
@@ -862,7 +945,65 @@ function CalendarPage({ user, onSignOut }) {
 
         {/* ── SIDEBAR ── */}
         <aside style={{ width: '256px', borderRight: '1px solid #dadce0', flexShrink: 0, overflowY: 'auto' }}>
-          <div style={{ padding: '16px' }}>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9e9e9e" strokeWidth="2.2" strokeLinecap="round" style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)' }}>
+                  <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search appointments"
+                  style={{
+                    width: '100%', boxSizing: 'border-box', padding: '8px 30px 8px 32px', fontSize: '13px',
+                    border: '1px solid #dadce0', borderRadius: '20px', background: '#fafafa',
+                    color: '#202124', outline: 'none', fontFamily: 'inherit'
+                  }}
+                  onFocus={e => { e.target.style.borderColor = '#592683'; e.target.style.boxShadow = '0 0 0 3px rgba(89,38,131,0.1)'; }}
+                  onBlur={e => { e.target.style.borderColor = '#dadce0'; e.target.style.boxShadow = 'none'; }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', color: '#9e9e9e',
+                      fontSize: '16px', lineHeight: 1, padding: '2px 4px'
+                    }}
+                  >×</button>
+                )}
+              </div>
+
+              {trimmedQuery && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+                  background: '#fff', border: '1px solid #dadce0', borderRadius: '10px',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)', maxHeight: '260px', overflowY: 'auto',
+                  zIndex: 50
+                }}>
+                  {searchResults.length === 0 ? (
+                    <div style={{ padding: '12px', fontSize: '13px', color: '#9e9e9e' }}>No matching appointments</div>
+                  ) : (
+                    searchResults.map(appt => {
+                      const monthLabel = new Date(appt.year, appt.month).toLocaleString('default', { month: 'short' });
+                      return (
+                        <div
+                          key={appt.id}
+                          className="search-result-item"
+                          onClick={() => goToSearchResult(appt)}
+                          style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '2px' }}
+                        >
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#202124' }}>{appt.title}</span>
+                          <span style={{ fontSize: '11px', color: '#9e9e9e' }}>{monthLabel} {appt.date}, {appt.year} · {appt.time}{typeof appt.spotsLeft === 'number' ? ` · ${appt.spotsLeft} left` : ''}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
             <button onClick={() => setShowCreate(true)} style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               background: '#fff', border: '1px solid #dadce0',
@@ -871,7 +1012,7 @@ function CalendarPage({ user, onSignOut }) {
               color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: 'pointer'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#592683" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Create
+              Create Appointment
             </button>
             <button onClick={() => setSelectedCell(true)} style={{
               display: 'flex', alignItems: 'center', gap: '8px',
@@ -919,7 +1060,7 @@ function CalendarPage({ user, onSignOut }) {
             {cells.map((cell, idx) => {
               const isToday = cell.day === TODAY_DATE && cell.month === CURRENT_MONTH && cell.year === CURRENT_YEAR;
               const isWeekend = idx % 7 === 0 || idx % 7 === 6;
-              const dayAppts = appointments.filter(a => a.date === cell.day && a.month === cell.month && a.year === cell.year);
+              const dayAppts = calendarItems.filter(a => a.date === cell.day && a.month === cell.month && a.year === cell.year);
               const isFirstOfMonth = cell.day === 1;
 
               return (
@@ -958,19 +1099,30 @@ function CalendarPage({ user, onSignOut }) {
 
                   {/* Event pills */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'hidden' }}>
-                    {dayAppts.slice(0, 3).map(appt => {
-                      const col = getEventColor(appt.id);
-                      return (
-                        <div key={appt.id} className="event-pill" style={{
-                          background: col.bg,
-                          color: '#fff', fontSize: '11px', padding: '2px 6px',
-                          borderRadius: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          fontWeight: 500, lineHeight: '18px'
-                        }}>
-                          {appt.time} {appt.title}
-                        </div>
-                      );
-                    })}
+                    {(() => {
+                      const highlighted = dayAppts.find(a => a.id === highlightedApptId);
+                      const rest = dayAppts.filter(a => a.id !== highlightedApptId);
+                      const ordered = highlighted ? [highlighted, ...rest] : dayAppts;
+                      return ordered.slice(0, 3).map(appt => {
+                        const col = getEventColor(appt.id);
+                        const isHighlighted = appt.id === highlightedApptId;
+                        return (
+                          <div key={appt.id} className={`event-pill ${isHighlighted ? 'highlight-pulse' : ''}`} style={{
+                            background: col.bg,
+                            color: '#fff', fontSize: '11px', padding: '3px 6px',
+                            borderRadius: '4px', overflow: 'hidden',
+                            fontWeight: 500, lineHeight: '14px', display: 'flex', flexDirection: 'column', gap: '1px'
+                          }}>
+                            <span style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {appt.title}
+                            </span>
+                            <span style={{ fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.9 }}>
+                              {appt.time}{typeof appt.spotsLeft === 'number' ? ` · ${appt.spotsLeft} left` : ''}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
                     {dayAppts.length > 3 && (
                       <div style={{ fontSize: '11px', color: '#5f6368', paddingLeft: '6px', fontWeight: 500 }}>
                         +{dayAppts.length - 3} more
@@ -997,8 +1149,9 @@ function CalendarPage({ user, onSignOut }) {
       {/* ── CREATE TASK MODAL ── */}
       {showCreate && (
         <CreateTaskModal
+          user={user}
           onClose={() => setShowCreate(false)}
-          onSave={(newAppts) => setAppointments(prev => [...prev, ...newAppts])}
+          loadAppointments={loadAppointments}
         />
       )}
     </div>

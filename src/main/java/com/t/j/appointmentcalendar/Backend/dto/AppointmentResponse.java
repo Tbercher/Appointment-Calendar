@@ -12,10 +12,14 @@ public record AppointmentResponse(
         String appointmentTitle,
         String appointmentDescription,
         int numOfSlots,
+        int availableSlots,
         boolean reservationStatus
 ) {
     // Static factory method to easily map from Entity to DTO
     public static AppointmentResponse fromEntity(Appointment appointment) {
+        int reservedCount = appointment.getReservees() == null ? 0 : appointment.getReservees().size();
+        int availableSlots = appointment.getNumOfSlots() - reservedCount;
+
         return new AppointmentResponse(
                 appointment.getId(),
                 appointment.getUsername(),
@@ -24,6 +28,7 @@ public record AppointmentResponse(
                 appointment.getAppointmentTitle(),
                 appointment.getAppointmentDescription(),
                 appointment.getNumOfSlots(),
+                availableSlots,
                 appointment.isReservationStatus()
         );
     }
