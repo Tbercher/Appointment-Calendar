@@ -221,11 +221,16 @@ function MiniCalendar({ year, month, onNavigate, selectedDay }) {
 function BookingModal({ cell, onClose, user, loadEvents }) {
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
+  const [eventDate, setEventDate] = useState("2026-06-30");
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [appointmentPointer, setAppointmentPointer] = useState('');
   const [repeating, setRepeating] = useState(false);
   const [error, setError] = useState('');
+
+  const handleDateChange = (e) => {
+  setEventDate(e.target.value);
+};
 
   const dateString =
     `${cell.year}-${String(cell.month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
@@ -249,7 +254,7 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
       start: `${dateString}T${startTime}:00`,
       end: `${dateString}T${endTime}:00`,
       appointmentPointer: appointmentPointer
-      ? Number(appointmentPointer)
+      ? Number(appointmentPointer || 0)
       : appointmentPointer,
       description,
       user: user.email,
@@ -324,7 +329,7 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
               fontSize: '18px'
             }}
           >
-            Create Event
+            Create Reminder
           </h2>
         </div>
 
@@ -357,7 +362,7 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
             <input
               type="date"
               value={dateString}
-              disabled
+              onChange={e => setEventDate}
               style={inputStyle}
             />
           </div>
@@ -868,6 +873,16 @@ function CalendarPage({ user, onSignOut }) {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#592683" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Create
             </button>
+            <button onClick={() => setSelectedCell(true)} style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: '#fff', border: '1px solid #dadce0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              borderRadius: '24px', padding: '10px 20px',
+              color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: 'pointer'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#592683" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Reminder
+            </button>
           </div>
           <MiniCalendar year={year} month={month} onNavigate={navigate} selectedDay={selectedCell} />
 
@@ -911,7 +926,7 @@ function CalendarPage({ user, onSignOut }) {
                 <div
                   key={idx}
                   className="cal-cell"
-                  onClick={() => setSelectedCell(cell)}
+                  //onClick={() => setSelectedCell(cell)}
                   style={{
                     borderRight: (idx + 1) % 7 === 0 ? 'none' : '1px solid #dadce0',
                     borderBottom: idx >= 35 ? 'none' : '1px solid #dadce0',
