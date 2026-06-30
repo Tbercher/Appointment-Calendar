@@ -6,10 +6,10 @@
 -- Insert Users
 -- Explicit IDs are used here so INSERT IGNORE knows what to check for duplicates
 INSERT IGNORE INTO users (id, username, password, email, user_details) VALUES
-(1, 'alice_admin', 'password123', 'alice@example.com', '{"role": "ADMIN", "preferences": {"theme": "dark"}}'),
-(2, 'bob_user', 'securepass', 'bob@example.com', '{"role": "USER", "preferences": {"theme": "light"}}'),
-(3, 'charlie_user', 'testpass', 'charlie@example.com', '{"role": "USER", "preferences": {}}'),
-(4, 'admin', 'password', 'admin@email.com', '{"role": "ADMIN", "preferences": {"theme": "dark"}}');
+(1, 'alice_admin', 'password123', 'alice@example.com', '{"User_Birthday": "1985-04-12T00:00:00.000+00:00", "User_Name": "Alice Smith", "User_Gender": "Female"}'),
+(2, 'bob_user', 'securepass', 'bob@example.com', '{"User_Birthday": "1990-08-22T00:00:00.000+00:00", "User_Name": "Bob Jones", "User_Gender": "Male"}'),
+(3, 'charlie_user', 'testpass', 'charlie@example.com', '{"User_Birthday": "1992-11-05T00:00:00.000+00:00", "User_Name": "Charlie Brown", "User_Gender": "Male"}'),
+(4, 'admin', 'password', 'admin@email.com', '{"User_Birthday": "1980-01-01T00:00:00.000+00:00", "User_Name": "System Admin", "User_Gender": "Other"}');
 
 -- Insert Events
 INSERT IGNORE INTO events (id, event_name, event_start, event_end, external_appointment, description, user_id, repeatable) VALUES
@@ -25,6 +25,6 @@ INSERT IGNORE INTO appointment (id, username, start_time, end_time, appointment_
 
 -- Insert Reservees (People who have booked the appointment slots)
 INSERT IGNORE INTO reservee (id, username, email, appointment_id) VALUES
-(1, 'bob_user', 'bob@example.com', 1), -- Bob booked Alice's Office Hours
-(2, 'charlie_user', 'charlie@example.com', 1), -- Charlie also booked Alice's Office Hours
-(3, 'alice_admin', 'alice@example.com', 3); -- Alice booked Bob's study group
+(1, 'bob_user', 'bob@example.com', 1),
+(2, 'charlie_user', 'charlie@example.com', 1),
+(3, 'alice_admin', 'alice@example.com', 3);
