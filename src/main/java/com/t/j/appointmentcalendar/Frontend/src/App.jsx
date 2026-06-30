@@ -33,7 +33,8 @@ const EVENT_COLORS = [
 ];
 
 function getEventColor(id) {
-  const idx = id.charCodeAt(id.length - 1) % EVENT_COLORS.length;
+  const str = String(id);
+  const idx = str.charCodeAt(str.length - 1) % EVENT_COLORS.length;
   return EVENT_COLORS[idx];
 }
 
@@ -471,15 +472,15 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
 }
 
 // ─── CREATE TASK MODAL ───────────────────────────────────────────────────────
-function CreateTaskModal({ onClose, onSave }) {
+function CreateTaskModal({ onClose, onSave, user }) {
   const [taskName, setTaskName] = useState('');
-  const [username, setUsername] = useState('');
   const [description, setDescription] = useState('');
   const [capacity, setCapacity] = useState(1);
   const [date, setDate] = useState('');
   const [timeStart, setTimeStart] = useState('');
   const [timeEnd, setTimeEnd] = useState('');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const formatTime = (t) => {
     if (!t) return '';
@@ -489,24 +490,61 @@ function CreateTaskModal({ onClose, onSave }) {
     return `${hour}:${m.toString().padStart(2,'0')} ${ampm}`;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!taskName.trim()) { setError('Please enter an appointment name.'); return; }
+    if (!description.trim()) { setError('Please enter a description.'); return; }
     if (!date) { setError('Please select a date.'); return; }
     if (!timeStart || !timeEnd) { setError('Please set both a start and end time.'); return; }
     if (timeStart >= timeEnd) { setError('End time must be after start time.'); return; }
-    const d = new Date(date + 'T00:00:00');
-    onSave([{
-      id: `task_${Date.now()}`,
-      date: d.getDate(),
-      month: d.getMonth(),
-      year: d.getFullYear(),
-      slotId: `custom_${Date.now()}`,
-      time: `${formatTime(timeStart)} – ${formatTime(timeEnd)}`,
-      title: taskName.trim(),
-      capacity,
-      spotsLeft: capacity,
-    }]);
-    onClose();
+
+    const startTime = `${date}T${timeStart}:00`;
+    const endTime = `${date}T${timeEnd}:00`;
+
+    const payload = {
+      username: user.username,
+      startTime,
+      endTime,
+      appointmentTitle: taskName.trim(),
+      appointmentDescription: description.trim(),
+      numOfSlots: capacity,
+      reservationStatus: false
+    };
+
+    setSaving(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8080/v1/api/appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        throw new Error(errBody?.details || errBody?.message || 'Failed to create appointment');
+      }
+
+      const saved = await response.json();
+      const d = new Date(date + 'T00:00:00');
+
+      onSave([{
+        id: saved.id,
+        date: d.getDate(),
+        month: d.getMonth(),
+        year: d.getFullYear(),
+        slotId: `appt_${saved.id}`,
+        time: `${formatTime(timeStart)} – ${formatTime(timeEnd)}`,
+        title: saved.appointmentTitle,
+        description: saved.appointmentDescription,
+        capacity: saved.numOfSlots,
+        spotsLeft: saved.numOfSlots,
+      }]);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputStyle = {
@@ -543,7 +581,7 @@ function CreateTaskModal({ onClose, onSave }) {
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </div>
-            <span style={{ fontSize: '17px', fontWeight: 600, color: '#1a0a2e' }}>Create Task</span>
+            <span style={{ fontSize: '17px', fontWeight: 600, color: '#1a0a2e' }}>Create Appointment</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5f6368', fontSize: '22px', lineHeight: 1, padding: '4px 8px', borderRadius: '6px' }}>×</button>
         </div>
@@ -565,7 +603,7 @@ function CreateTaskModal({ onClose, onSave }) {
 
           {/* Description */}
           <div>
-            <label style={labelStyle}>Description <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#aaa' }}>(optional)</span></label>
+            <label style={labelStyle}>Description</label>
             <textarea
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Add any notes or details..."
@@ -657,16 +695,16 @@ function CreateTaskModal({ onClose, onSave }) {
           padding: '16px 24px', borderTop: '1px solid #f1f3f4',
           display: 'flex', justifyContent: 'flex-end', gap: '10px', background: '#fafafa'
         }}>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} disabled={saving} style={{
             padding: '9px 20px', borderRadius: '8px', border: '1px solid #dadce0',
-            background: '#fff', color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: 'pointer'
+            background: '#fff', color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: saving ? 'default' : 'pointer'
           }}>Cancel</button>
-          <button onClick={handleSave} style={{
+          <button onClick={handleSave} disabled={saving} style={{
             padding: '9px 24px', borderRadius: '8px', border: 'none',
             background: 'linear-gradient(135deg,#592683,#7b2fbe)',
-            color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(89,38,131,0.3)'
-          }}>Save Task</button>
+            color: '#fff', fontSize: '14px', fontWeight: 600, cursor: saving ? 'default' : 'pointer',
+            boxShadow: '0 2px 8px rgba(89,38,131,0.3)', opacity: saving ? 0.7 : 1
+          }}>{saving ? 'Saving…' : 'Save Appointment'}</button>
         </div>
       </div>
     </div>
@@ -680,7 +718,7 @@ function CalendarPage({ user, onSignOut }) {
   const [selectedCell, setSelectedCell] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  
+
 
     const loadEvents = async () => {
 
@@ -752,7 +790,7 @@ function CalendarPage({ user, onSignOut }) {
     }, []);
 
 
-  
+
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -866,7 +904,7 @@ function CalendarPage({ user, onSignOut }) {
               color: '#3c4043', fontSize: '14px', fontWeight: 500, cursor: 'pointer'
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#592683" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Create
+              Create Appointment
             </button>
           </div>
           <MiniCalendar year={year} month={month} onNavigate={navigate} selectedDay={selectedCell} />
@@ -982,6 +1020,7 @@ function CalendarPage({ user, onSignOut }) {
       {/* ── CREATE TASK MODAL ── */}
       {showCreate && (
         <CreateTaskModal
+          user={user}
           onClose={() => setShowCreate(false)}
           onSave={(newAppts) => setAppointments(prev => [...prev, ...newAppts])}
         />
