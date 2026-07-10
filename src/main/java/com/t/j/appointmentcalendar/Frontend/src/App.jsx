@@ -233,17 +233,14 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
   setEventDate(e.target.value);
 };
 
-  const dateString =
-    `${cell.year}-${String(cell.month + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
-
   const handleSave = async () => {
     if (!eventName.trim()) {
       setError('Event name is required');
       return;
     }
 
-    const startDate = `${dateString}T${startTime}:00`;
-    const endDate = `${dateString}T${endTime}:00`;
+    const startDate = `${eventDate}T${startTime}:00`;
+    const endDate = `${eventDate}T${endTime}:00`;
 
     if (new Date(startDate) >= new Date(endDate)) {
       setError('End time must be after start time');
@@ -252,8 +249,8 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
 
     const payload = {
       eventName: eventName.trim(),
-      start: `${dateString}T${startTime}:00`,
-      end: `${dateString}T${endTime}:00`,
+      start: `${eventDate}T${startTime}:00`,
+      end: `${eventDate}T${endTime}:00`,
       appointmentPointer: appointmentPointer
       ? Number(appointmentPointer || 0)
       : appointmentPointer,
@@ -362,8 +359,8 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
             <label>Date</label>
             <input
               type="date"
-              value={dateString}
-              onChange={e => setEventDate}
+              value={eventDate} 
+              onChange={(e) => setEventDate(e.target.value)} 
               style={inputStyle}
             />
           </div>
