@@ -3,6 +3,7 @@ package com.t.j.appointmentcalendar.Backend.dto;
 import com.t.j.appointmentcalendar.Backend.appointment.Appointment;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record AppointmentResponse(
         Long id,
@@ -13,12 +14,17 @@ public record AppointmentResponse(
         String appointmentDescription,
         int numOfSlots,
         int availableSlots,
-        boolean reservationStatus
+        boolean reservationStatus,
+        List<String> reservedUsernames
 ) {
-    // Static factory method to easily map from Entity to DTO
     public static AppointmentResponse fromEntity(Appointment appointment) {
-        int reservedCount = appointment.getReservees() == null ? 0 : appointment.getReservees().size();
-        int availableSlots = appointment.getNumOfSlots() - reservedCount;
+        List<String> reservedUsernames = appointment.getReservees() == null
+                ? List.of()
+                : appointment.getReservees().stream()
+                .map(com.t.j.appointmentcalendar.Backend.appointment.Reservee::getUsername)
+                .toList();
+
+        int availableSlots = appointment.getNumOfSlots() - reservedUsernames.size();
 
         return new AppointmentResponse(
                 appointment.getId(),
@@ -29,7 +35,8 @@ public record AppointmentResponse(
                 appointment.getAppointmentDescription(),
                 appointment.getNumOfSlots(),
                 availableSlots,
-                appointment.isReservationStatus()
+                appointment.isReservationStatus(),
+                reservedUsernames
         );
     }
 }

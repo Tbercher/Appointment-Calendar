@@ -3,6 +3,9 @@ package com.t.j.appointmentcalendar.Backend.appointment;
 import com.t.j.appointmentcalendar.Backend.dto.AppointmentRequest;
 import com.t.j.appointmentcalendar.Backend.dto.AppointmentResponse;
 import com.t.j.appointmentcalendar.Backend.exception.AppointmentNotFoundException;
+import com.t.j.appointmentcalendar.Backend.exception.AppointmentFullException;
+import com.t.j.appointmentcalendar.Backend.exception.AlreadyReservedException;
+import com.t.j.appointmentcalendar.Backend.exception.ReservationNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +77,45 @@ public class AppointmentServices {
             throw new AppointmentNotFoundException(id);
         }
         appointmentRepository.deleteById(id);
+    }
+
+    // 6. RESERVE A SLOT
+    public AppointmentResponse reserveSlot(Long id, String username, String email) {
+        // Pessimistic lock: blocks concurrent reservations against this same
+        // appointment until this transaction commits, so two requests can't
+        // both slip in on the last remaining slot.
+        Appointment appointment = appointmentRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new AppointmentNotFoundException(id));
+
+        boolean alreadyReserved = appointment.getReservees().stream()
+                .anyMatch(r -> r.getUsername().equalsIgnoreCase(username));
+        if (alreadyReserved) {
+            throw new AlreadyReservedException(username, id);
+        }
+
+        if (appointment.getReservees().size() >= appointment.getNumOfSlots()) {
+            throw new AppointmentFullException(id);
+        }
+
+        Reservee reservee = new Reservee(username, email, appointment);
+        appointment.addReservee(reservee);
+
+        Appointment saved = appointmentRepository.save(appointment);
+        return AppointmentResponse.fromEntity(saved);
+    }
+    public AppointmentResponse cancelReservation(Long id, String username) {
+        Appointment appointment = appointmentRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new AppointmentNotFoundException(id));
+
+        Reservee match = appointment.getReservees().stream()
+                .filter(r -> r.getUsername().equalsIgnoreCase(username))
+                .findFirst()
+                .orElseThrow(() -> new ReservationNotFoundException(username, id));
+
+        appointment.removeReservee(match);
+
+        Appointment saved = appointmentRepository.save(appointment);
+        return AppointmentResponse.fromEntity(saved);
     }
 
 }

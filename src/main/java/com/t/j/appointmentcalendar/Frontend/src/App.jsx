@@ -13,15 +13,6 @@ const NOW = new Date();
 const CURRENT_YEAR = NOW.getFullYear();
 const CURRENT_MONTH = NOW.getMonth();
 const TODAY_DATE = NOW.getDate();
-/*
-const INITIAL_APPOINTMENTS = [
-  { id: 'a1', date: 5, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's1', time: '9:00 AM', title: 'Franchise Meeting' },
-  { id: 'a2', date: 12, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's4', time: '1:00 PM', title: 'Supply Drop' },
-  { id: 'a3', date: 18, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's3', time: '11:00 AM', title: 'Auto Customization' },
-  { id: 'a4', date: 18, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's6', time: '3:00 PM', title: 'Turf Strategy' },
-  { id: 'a5', date: 25, month: CURRENT_MONTH, year: CURRENT_YEAR, slotId: 's2', time: '10:00 AM', title: 'Inventory Check' },
-];
-*/
 
 const EVENT_COLORS = [
   { bg: '#4285F4', light: '#EAF1FF' },
@@ -359,8 +350,8 @@ function BookingModal({ cell, onClose, user, loadEvents }) {
             <label>Date</label>
             <input
               type="date"
-              value={eventDate} 
-              onChange={(e) => setEventDate(e.target.value)} 
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
               style={inputStyle}
             />
           </div>
@@ -693,6 +684,168 @@ function CreateTaskModal({ onClose, loadAppointments, user }) {
   );
 }
 
+// ─── RESERVE MODAL ────────────────────────────────────────────────────────────
+// Lets a user reserve an open slot on an existing appointment. Confirms, then
+// calls the backend to record the reservation (backend decrements
+// availableSlots / numOfSlots for that appointment).
+function ReserveModal({ appt, user, onClose, loadAppointments }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const reservedByMe = !!appt.reservedByMe;
+  const full = !reservedByMe && typeof appt.spotsLeft === 'number' && appt.spotsLeft <= 0;
+
+  const handleReserve = async () => {
+    if (full) return;
+    setSaving(true);
+    setError('');
+    try {
+      const response = await fetch(
+        `http://localhost:8080/v1/api/appointment/${appt.rawId}/reserve`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user.username, email: user.email })
+        }
+      );
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        throw new Error(errBody?.details || errBody?.message || 'Failed to reserve slot');
+      }
+
+      await loadAppointments();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelReservation = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const response = await fetch(
+        `http://localhost:8080/v1/api/appointment/${appt.rawId}/reserve`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user.username })
+        }
+      );
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => null);
+        throw new Error(errBody?.details || errBody?.message || 'Failed to cancel reservation');
+      }
+
+      await loadAppointments();
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const headerText = reservedByMe ? 'Your Reservation' : full ? 'Appointment Full' : 'Reserve Slot';
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1200, padding: '16px', fontFamily: "'Google Sans','Segoe UI',sans-serif"
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#fff', width: '100%', maxWidth: '420px',
+          borderRadius: '14px', overflow: 'hidden',
+          boxShadow: '0 20px 50px rgba(0,0,0,.25)'
+        }}
+      >
+        <div style={{
+          padding: '18px 24px', borderBottom: '1px solid #eee',
+          background: 'linear-gradient(135deg,#f9f4ff,#f4f0ff)'
+        }}>
+          <h2 style={{ margin: 0, color: '#592683', fontSize: '18px' }}>
+            {headerText}
+          </h2>
+        </div>
+
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: '#1a0a2e' }}>{appt.title}</div>
+          {appt.description && (
+            <div style={{ fontSize: '13px', color: '#5f6368' }}>{appt.description}</div>
+          )}
+          <div style={{ fontSize: '13px', color: '#3c4043' }}>
+            {new Date(appt.year, appt.month, appt.date).toLocaleDateString('default', { month: 'long', day: 'numeric', year: 'numeric' })} · {appt.time}
+          </div>
+
+          {reservedByMe && (
+            <div style={{
+              fontSize: '13px', color: '#0F9D58', fontWeight: 600,
+              background: '#E6F4EA', padding: '8px 10px', borderRadius: '8px'
+            }}>
+              ✓ You have a spot reserved for this appointment
+            </div>
+          )}
+
+          {!reservedByMe && typeof appt.spotsLeft === 'number' && (
+            <div style={{ fontSize: '13px', color: full ? '#c62828' : '#0F9D58', fontWeight: 600 }}>
+              {full ? 'No spots remaining' : `${appt.spotsLeft} spot${appt.spotsLeft === 1 ? '' : 's'} left`}
+            </div>
+          )}
+
+          {error && (
+            <div style={{ background: '#fce8e6', color: '#c62828', padding: '10px', borderRadius: '8px', fontSize: '13px' }}>
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div style={{
+          padding: '16px 24px', borderTop: '1px solid #eee',
+          display: 'flex', justifyContent: 'flex-end', gap: '10px'
+        }}>
+          <button onClick={onClose} disabled={saving} style={{
+            padding: '10px 18px', border: '1px solid #dadce0',
+            background: '#fff', color: '#3c4043', fontSize: '14px', fontWeight: 500,
+            borderRadius: '8px', cursor: saving ? 'default' : 'pointer'
+          }}>
+            {reservedByMe || full ? 'Close' : 'Cancel'}
+          </button>
+
+          {reservedByMe && (
+            <button onClick={handleCancelReservation} disabled={saving} style={{
+              padding: '10px 22px', border: 'none', borderRadius: '8px',
+              background: '#c62828', color: '#fff', fontWeight: 600,
+              cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1
+            }}>
+              {saving ? 'Cancelling…' : 'Cancel Reservation'}
+            </button>
+          )}
+
+          {!reservedByMe && !full && (
+            <button onClick={handleReserve} disabled={saving} style={{
+              padding: '10px 22px', border: 'none', borderRadius: '8px',
+              background: '#592683', color: '#fff', fontWeight: 600,
+              cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1
+            }}>
+              {saving ? 'Reserving…' : 'Reserve'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN CALENDAR ────────────────────────────────────────────────────────────
 function CalendarPage({ user, onSignOut }) {
   const [currentDate, setCurrentDate] = useState(new Date(CURRENT_YEAR, CURRENT_MONTH, 1));
@@ -702,6 +855,7 @@ function CalendarPage({ user, onSignOut }) {
   const [showCreate, setShowCreate] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedApptId, setHighlightedApptId] = useState(null);
+  const [reserveTarget, setReserveTarget] = useState(null);
 
 
 
@@ -786,6 +940,7 @@ function CalendarPage({ user, onSignOut }) {
 
           return {
             id: `appt_${appt.id}`,
+            rawId: appt.id,
             date: start.getDate(),
             month: start.getMonth(),
             year: start.getFullYear(),
@@ -797,6 +952,8 @@ function CalendarPage({ user, onSignOut }) {
             spotsLeft: appt.availableSlots,
             reservationStatus: appt.reservationStatus,
             username: appt.username,
+            reservedByMe: Array.isArray(appt.reservedUsernames)
+              && appt.reservedUsernames.some(u => u.toLowerCase() === user.username.toLowerCase()),
           };
         });
 
@@ -811,7 +968,7 @@ function CalendarPage({ user, onSignOut }) {
       loadAppointments();
     }, []);
 
-    // Combined list used for rendering the grid and for search â events the
+    // Combined list used for rendering the grid and for search â events the
     // user has booked, plus every appointment slot in the appointment table.
     const calendarItems = [...appointments, ...appointmentSlots];
 
@@ -836,6 +993,14 @@ function CalendarPage({ user, onSignOut }) {
   };
 
   const handleCancel = (id) => setAppointments(prev => prev.filter(a => a.id !== id));
+
+  // Only appointment-table slots (they carry a spotsLeft/capacity) are
+  // reservable — booked personal events (reminders) are not.
+  const handlePillClick = (appt) => {
+    if (typeof appt.spotsLeft === 'number') {
+      setReserveTarget(appt);
+    }
+  };
 
   const trimmedQuery = searchQuery.trim().toLowerCase();
   const searchResults = trimmedQuery
@@ -867,6 +1032,7 @@ function CalendarPage({ user, onSignOut }) {
         .nav-btn:hover { background: #f1f3f4 !important; }
         .day-pill:hover { background: #e8d5f5 !important; cursor: pointer; }
         .event-pill:hover { opacity: 0.85; }
+        .event-pill.reservable:hover { opacity: 0.85; transform: translateY(-1px); }
         .slot-btn:hover { opacity: 0.85; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 3px; }
@@ -1030,7 +1196,6 @@ function CalendarPage({ user, onSignOut }) {
             </div>
             {[
               { label: 'Appointments', color: '#592683' },
-              { label: 'Personal', color: '#4285F4' },
               { label: 'Reminders', color: '#0F9D58' },
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', cursor: 'pointer' }}>
@@ -1101,20 +1266,34 @@ function CalendarPage({ user, onSignOut }) {
                       const rest = dayAppts.filter(a => a.id !== highlightedApptId);
                       const ordered = highlighted ? [highlighted, ...rest] : dayAppts;
                       return ordered.slice(0, 3).map(appt => {
-                        const col = getEventColor(appt.id);
                         const isHighlighted = appt.id === highlightedApptId;
+                        const isReservable = typeof appt.spotsLeft === 'number';
+                        // Appointment-table slots (created via "Create Appointment") are
+                        // purple; reminders/events (created via "Create Reminder") are green.
+                        const col = { bg: isReservable ? '#592683' : '#0F9D58' };
+                        const isFull = isReservable && !appt.reservedByMe && appt.spotsLeft <= 0;
                         return (
-                          <div key={appt.id} className={`event-pill ${isHighlighted ? 'highlight-pulse' : ''}`} style={{
-                            background: col.bg,
-                            color: '#fff', fontSize: '11px', padding: '3px 6px',
-                            borderRadius: '4px', overflow: 'hidden',
-                            fontWeight: 500, lineHeight: '14px', display: 'flex', flexDirection: 'column', gap: '1px'
-                          }}>
+                          <div
+                            key={appt.id}
+                            className={`event-pill ${isHighlighted ? 'highlight-pulse' : ''} ${isReservable ? 'reservable' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); handlePillClick(appt); }}
+                            title={isReservable ? (appt.reservedByMe ? 'You have a spot — click to manage' : isFull ? 'Full' : 'Click to reserve a spot') : undefined}
+                            style={{
+                              background: isFull ? '#9aa0a6' : col.bg,
+                              color: '#fff', fontSize: '11px', padding: '3px 6px',
+                              borderRadius: '4px', overflow: 'hidden',
+                              fontWeight: 500, lineHeight: '14px', display: 'flex', flexDirection: 'column', gap: '1px',
+                              cursor: isReservable ? 'pointer' : 'default',
+                              transition: 'transform 0.1s, opacity 0.1s',
+                              outline: appt.reservedByMe ? '2px solid #F4B400' : 'none',
+                              outlineOffset: appt.reservedByMe ? '-2px' : '0'
+                            }}
+                          >
                             <span style={{ fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {appt.title}
+                              {appt.reservedByMe ? '✓ ' : ''}{appt.title}
                             </span>
                             <span style={{ fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0.9 }}>
-                              {appt.time}{typeof appt.spotsLeft === 'number' ? ` · ${appt.spotsLeft} left` : ''}
+                              {appt.time}{typeof appt.spotsLeft === 'number' ? ` · ${isFull ? 'Full' : `${appt.spotsLeft} left`}` : ''}
                             </span>
                           </div>
                         );
@@ -1148,6 +1327,16 @@ function CalendarPage({ user, onSignOut }) {
         <CreateTaskModal
           user={user}
           onClose={() => setShowCreate(false)}
+          loadAppointments={loadAppointments}
+        />
+      )}
+
+      {/* ── RESERVE MODAL ── */}
+      {reserveTarget && (
+        <ReserveModal
+          appt={reserveTarget}
+          user={user}
+          onClose={() => setReserveTarget(null)}
           loadAppointments={loadAppointments}
         />
       )}

@@ -1,9 +1,11 @@
 package com.t.j.appointmentcalendar.Backend.appointment;
 
 
+import com.t.j.appointmentcalendar.Backend.dto.CancelReservationRequest;
 import com.t.j.appointmentcalendar.Backend.exception.AppointmentNotFoundException;
 import com.t.j.appointmentcalendar.Backend.dto.AppointmentRequest;
 import com.t.j.appointmentcalendar.Backend.dto.AppointmentResponse;
+import com.t.j.appointmentcalendar.Backend.dto.ReservationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,5 +57,22 @@ public class AppointmentController {
     public ResponseEntity<Void> deleteAppointment(@PathVariable Long id) {
         appointmentServices.deleteAppointment(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // 6. RESERVE A SLOT
+    @PatchMapping("/{id}/reserve")
+    public ResponseEntity<AppointmentResponse> reserveAppointment(
+            @PathVariable Long id,
+            @Valid @RequestBody ReservationRequest request) {
+        AppointmentResponse response = appointmentServices.reserveSlot(id, request.username(), request.email());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    // 7. CANCEL A RESERVATION
+    @DeleteMapping("/{id}/reserve")
+    public ResponseEntity<AppointmentResponse> cancelReservation(
+            @PathVariable Long id,
+            @Valid @RequestBody CancelReservationRequest request) {
+        AppointmentResponse response = appointmentServices.cancelReservation(id, request.username());
+        return ResponseEntity.ok(response);
     }
 }
